@@ -24,7 +24,7 @@ export function BookingForm({ participantId = "TEST_P001" }) {
   useEffect(() => {
     setStepStartTime(Date.now());
     trackEvent("step_viewed", `step_${step}`);
-  }, [step]);
+  }, [step, trackEvent]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
