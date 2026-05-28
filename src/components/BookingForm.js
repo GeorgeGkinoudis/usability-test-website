@@ -24,7 +24,7 @@ export function BookingForm({ participantId = "TEST_P001" }) {
   useEffect(() => {
     setStepStartTime(Date.now());
     trackEvent("step_viewed", `step_${step}`);
-  }, [step]); // Remove trackEvent from dependency array
+  }, [step]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -32,24 +32,31 @@ export function BookingForm({ participantId = "TEST_P001" }) {
       ...prev,
       [name]: value,
     }));
+  };
 
-    trackEvent("field_changed", name);
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      const { name } = e.target;
+      trackEvent("key_pressed", `Enter_in_${name}`);
+    }
   };
 
   const handleNextStep = () => {
     const timeOnStep = Date.now() - stepStartTime;
-    trackEvent("step_completed", `step_${step}`, timeOnStep);
+    trackEvent("button_clicked", `next_step_${step}`, timeOnStep);
     setStep(step + 1);
   };
 
   const handlePreviousStep = () => {
+    const timeOnStep = Date.now() - stepStartTime;
+    trackEvent("button_clicked", `back_step_${step}`, timeOnStep);
     setStep(step - 1);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const totalTime = Date.now() - stepStartTime;
-    trackEvent("form_submitted", "booking_complete", totalTime);
+    trackEvent("button_clicked", "complete_booking", totalTime);
 
     alert(
       `✅ Booking submitted!\nSession ID: ${sessionId}\nParticipant: ${participantId}\n\nCheck the Events Log below to see tracked data.`,
@@ -75,7 +82,7 @@ export function BookingForm({ participantId = "TEST_P001" }) {
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
-    trackEvent("data_exported", "export_json");
+    trackEvent("button_clicked", "export_data");
   };
 
   const clearData = () => {
@@ -83,7 +90,7 @@ export function BookingForm({ participantId = "TEST_P001" }) {
     sessionStorage.removeItem("session_id");
     setTrackedEvents([]);
     setStep(1);
-    trackEvent("data_cleared", "reset");
+    trackEvent("button_clicked", "clear_data");
   };
 
   return (
@@ -105,6 +112,7 @@ export function BookingForm({ participantId = "TEST_P001" }) {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
+                onKeyPress={handleKeyPress}
                 placeholder="Enter your full name"
               />
             </div>
@@ -115,6 +123,7 @@ export function BookingForm({ participantId = "TEST_P001" }) {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
+                onKeyPress={handleKeyPress}
                 placeholder="Enter your email"
               />
             </div>
@@ -133,6 +142,7 @@ export function BookingForm({ participantId = "TEST_P001" }) {
                 name="destination"
                 value={formData.destination}
                 onChange={handleInputChange}
+                onKeyPress={handleKeyPress}
               >
                 <option value="">Select a destination</option>
                 <option value="paris">Paris, France</option>
@@ -148,6 +158,7 @@ export function BookingForm({ participantId = "TEST_P001" }) {
                 name="checkIn"
                 value={formData.checkIn}
                 onChange={handleInputChange}
+                onKeyPress={handleKeyPress}
               />
             </div>
             <div className="form-group">
@@ -157,6 +168,7 @@ export function BookingForm({ participantId = "TEST_P001" }) {
                 name="checkOut"
                 value={formData.checkOut}
                 onChange={handleInputChange}
+                onKeyPress={handleKeyPress}
               />
             </div>
             <div className="form-buttons">
@@ -179,6 +191,7 @@ export function BookingForm({ participantId = "TEST_P001" }) {
                 name="guests"
                 value={formData.guests}
                 onChange={handleInputChange}
+                onKeyPress={handleKeyPress}
               >
                 <option value="1">1 Guest</option>
                 <option value="2">2 Guests</option>
