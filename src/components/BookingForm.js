@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useEventTracking } from "../hooks/useEventTracking";
 import "../styles/BookingForm.css";
 
@@ -24,7 +24,7 @@ export function BookingForm({ participantId = "TEST_P001" }) {
   useEffect(() => {
     setStepStartTime(Date.now());
     trackEvent("step_viewed", `step_${step}`);
-  }, [step]);
+  }, [step, trackEvent]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -34,39 +34,45 @@ export function BookingForm({ participantId = "TEST_P001" }) {
     }));
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      const { name } = e.target;
-      trackEvent("key_pressed", `Enter_in_${name}`);
-    }
-  };
+  const handleKeyPress = useCallback(
+    (e) => {
+      if (e.key === "Enter") {
+        const { name } = e.target;
+        trackEvent("key_pressed", `Enter_in_${name}`);
+      }
+    },
+    [trackEvent]
+  );
 
-  const handleNextStep = () => {
+  const handleNextStep = useCallback(() => {
     const timeOnStep = Date.now() - stepStartTime;
     trackEvent("button_clicked", `next_step_${step}`, timeOnStep);
     setStep(step + 1);
-  };
+  }, [step, stepStartTime, trackEvent]);
 
-  const handlePreviousStep = () => {
+  const handlePreviousStep = useCallback(() => {
     const timeOnStep = Date.now() - stepStartTime;
     trackEvent("button_clicked", `back_step_${step}`, timeOnStep);
     setStep(step - 1);
-  };
+  }, [step, stepStartTime, trackEvent]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const totalTime = Date.now() - stepStartTime;
-    trackEvent("button_clicked", "complete_booking", totalTime);
+  const handleSubmit = useCallback(
+    (e) => {
+      e.preventDefault();
+      const totalTime = Date.now() - stepStartTime;
+      trackEvent("button_clicked", "complete_booking", totalTime);
 
-    alert(
-      `✅ Booking submitted!\nSession ID: ${sessionId}\nParticipant: ${participantId}\n\nCheck the Events Log below to see tracked data.`,
-    );
+      alert(
+        `✅ Booking submitted!\nSession ID: ${sessionId}\nParticipant: ${participantId}\n\nCheck the Events Log below to see tracked data.`,
+      );
 
-    const events = JSON.parse(localStorage.getItem("tracked_events") || "[]");
-    setTrackedEvents(events);
-  };
+      const events = JSON.parse(localStorage.getItem("tracked_events") || "[]");
+      setTrackedEvents(events);
+    },
+    [stepStartTime, trackEvent, sessionId, participantId]
+  );
 
-  const exportData = () => {
+  const exportData = useCallback(() => {
     const events = JSON.parse(localStorage.getItem("tracked_events") || "[]");
     const dataStr = JSON.stringify(events, null, 2);
     const element = document.createElement("a");
@@ -83,15 +89,15 @@ export function BookingForm({ participantId = "TEST_P001" }) {
     element.click();
     document.body.removeChild(element);
     trackEvent("button_clicked", "export_data");
-  };
+  }, [participantId, sessionId, trackEvent]);
 
-  const clearData = () => {
+  const clearData = useCallback(() => {
     localStorage.removeItem("tracked_events");
     sessionStorage.removeItem("session_id");
     setTrackedEvents([]);
     setStep(1);
     trackEvent("button_clicked", "clear_data");
-  };
+  }, [trackEvent]);
 
   return (
     <div className="booking-container">
