@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || "";
@@ -13,37 +14,44 @@ export function useEventTracking(participantId) {
     sessionStorage.setItem("session_id", sessionId);
   }
 
-  const trackEvent = async (eventType, actionName, responseTime = null) => {
-    const eventData = {
-      participant_id: participantId,
-      event_type: eventType,
-      action_name: actionName,
-      timestamp: new Date().toISOString(),
-      response_time: responseTime,
-      session_id: sessionId,
-    };
+  const trackEvent = useCallback(
+    async (eventType, actionName, responseTime = null) => {
+      const eventData = {
+        participant_id: participantId,
+        event_type: eventType,
+        action_name: actionName,
+        timestamp: new Date().toISOString(),
+        response_time: responseTime,
+        session_id: sessionId,
+      };
 
-    console.log("📊 Event Tracked:", eventData);
+      console.log("📊 Event Tracked:", eventData);
 
-    if (typeof window !== "undefined") {
-      const events = JSON.parse(localStorage.getItem("tracked_events") || "[]");
-      events.push(eventData);
-      localStorage.setItem("tracked_events", JSON.stringify(events));
-    }
-
-    if (supabase) {
-      try {
-        const { error } = await supabase.from("events").insert([eventData]);
-
-        if (error) console.error("Supabase error:", error);
-        else console.log("✅ Event saved to Supabase");
-      } catch (err) {
-        console.error("Error tracking event:", err);
+      if (typeof window !== "undefined") {
+        const events = JSON.parse(
+          localStorage.getItem("tracked_events") || "[]"
+        );
+        events.push(eventData);
+        localStorage.setItem("tracked_events", JSON.stringify(events));
       }
-    } else {
-      console.warn("⚠️ Supabase not configured - events stored locally only");
-    }
-  };
+
+      if (supabase) {
+        try {
+          const { error } = await supabase.from("events").insert([eventData]);
+
+          if (error) console.error("Supabase error:", error);
+          else console.log("✅ Event saved to Supabase");
+        } catch (err) {
+          console.error("Error tracking event:", err);
+        }
+      } else {
+        console.warn(
+          "⚠️ Supabase not configured - events stored locally only"
+        );
+      }
+    },
+    [participantId, sessionId]
+  );
 
   return { trackEvent, sessionId };
 }
